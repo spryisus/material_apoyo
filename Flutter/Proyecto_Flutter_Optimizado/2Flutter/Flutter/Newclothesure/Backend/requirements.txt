@@ -1,0 +1,2 @@
+# Dependencias para el paquete backend de The Clothesure 2.0
+pika>=1.3.0
