@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Selección de Materias - Plataforma de Apoyo</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="welcome-card">
+            <div class="welcome-header">
+                <h1>¡Bienvenido<span id="userName"></span>! 👋</h1>
+                <p>Selecciona las materias que deseas estudiar</p>
+                <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+            </div>
+            
+            <div class="materias-grid" id="materiasGrid">
+                <!-- Las materias se cargarán dinámicamente -->
+            </div>
+            
+            <div class="selection-info">
+                <p>Materias seleccionadas: <span id="selectedCount">0</span> de <span id="totalMaterias">-</span></p>
+                <button id="startExamBtn" class="btn btn-primary" disabled>
+                    Iniciar Examen
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/materias.js"></script>
+</body>
+</html>
+

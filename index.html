@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Plataforma de Apoyo - Inicio de Sesión</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <div class="logo">
+                <h1>📚 Plataforma de Apoyo</h1>
+                <p>Estudia y practica con nuestros exámenes</p>
+            </div>
+            
+            <form id="loginForm" class="form">
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" required placeholder="tu@email.com">
+                </div>
+                
+                <div class="form-group" id="nombreGroup" style="display: none;">
+                    <label for="nombre">Nombre (Opcional)</label>
+                    <input type="text" id="nombre" name="nombre" placeholder="Tu nombre">
+                </div>
+                
+                <div class="form-group" id="apellidoGroup" style="display: none;">
+                    <label for="apellido">Apellido (Opcional)</label>
+                    <input type="text" id="apellido" name="apellido" placeholder="Tu apellido">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                
+                <div id="errorMessage" class="error-message" style="display: none;"></div>
+            </form>
+            
+            <div class="register-link">
+                <p>¿No tienes cuenta? <a href="#" id="registerLink">Regístrate aquí</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/aut.js"></script>
+</body>
+</html>
+

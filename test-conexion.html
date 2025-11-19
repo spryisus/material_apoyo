@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Conexión - Supabase</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .test-result {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+        }
+        .test-result.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+        }
+        .test-result.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+        }
+        .test-result.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+        }
+        .test-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+        }
+        .test-section h3 {
+            margin-top: 0;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔌 Test de Conexión a Supabase</h1>
+        
+        <div class="test-section">
+            <h3>1. Configuración Actual</h3>
+            <div id="configInfo" class="test-result info">
+                Cargando configuración...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Pruebas de Conexión</h3>
+            <button onclick="testConexion()">Probar Conexión Básica</button>
+            <button onclick="testMaterias()">Probar Tabla Materias</button>
+            <button onclick="testPreguntas()">Probar Tabla Preguntas</button>
+            <button onclick="testAuth()">Probar Autenticación</button>
+            <button onclick="testTodo()">Probar Todo</button>
+            
+            <div id="testResults"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Información de la Base de Datos</h3>
+            <div id="dbInfo"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from './js/supabase.js';
+
+        // Mostrar configuración
+        function mostrarConfiguracion() {
+            const configDiv = document.getElementById('configInfo');
+            const url = supabase.supabaseUrl;
+            const key = supabase.supabaseKey;
+            
+            // Ocultar parte de la key por seguridad
+            const keyOculta = key.substring(0, 20) + '...' + key.substring(key.length - 10);
+            
+            configDiv.innerHTML = `
+                <strong>URL:</strong> ${url}<br>
+                <strong>Key:</strong> ${keyOculta}<br>
+                <strong>Estado:</strong> ${url.includes('supabase.co') ? '✅ URL parece correcta' : '⚠️ URL puede estar incorrecta'}
+            `;
+        }
+
+        function agregarResultado(mensaje, tipo = 'info') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${tipo}`;
+            resultDiv.innerHTML = mensaje;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        function limpiarResultados() {
+            document.getElementById('testResults').innerHTML = '';
+        }
+
+        window.testConexion = async function() {
+            limpiarResultados();
+            agregarResultado('🔄 Probando conexión básica...', 'info');
+            
+            try {
+                const { data, error } = await supabase.from('materias').select('count').limit(1);
+                
+                if (error) {
+                    agregarResultado(`❌ Error de conexión: ${error.message}<br><pre>${JSON.stringify(error, null, 2)}</pre>`, 'error');
+                } else {
+                    agregarResultado('✅ Conexión exitosa a Supabase!', 'success');
+                }
+            } catch (err) {
+                agregarResultado(`❌ Error: ${err.message}`, 'error');
+            }
+        };
+
+        window.testMaterias = async function() {
+            limpiarResultados();
+            agregarResultado('🔄 Probando tabla materias...', 'info');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('materias')
+                    .select('*')
+                    .limit(10);
+                
+                if (error) {
+                    agregarResultado(`❌ Error al acceder a materias: ${error.message}<br><pre>${JSON.stringify(error, null, 2)}</pre>`, 'error');
+                } else {
+                    agregarResultado(`✅ Tabla materias accesible. Encontradas ${data.length} materias.<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                }
+            } catch (err) {
+                agregarResultado(`❌ Error: ${err.message}`, 'error');
+            }
+        };
+
+        window.testPreguntas = async function() {
+            limpiarResultados();
+            agregarResultado('🔄 Probando tabla preguntas...', 'info');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('preguntas')
+                    .select('id, pregunta, materia_id')
+                    .limit(5);
+                
+                if (error) {
+                    agregarResultado(`❌ Error al acceder a preguntas: ${error.message}<br><pre>${JSON.stringify(error, null, 2)}</pre>`, 'error');
+                } else {
+                    agregarResultado(`✅ Tabla preguntas accesible. Mostrando ${data.length} preguntas de ejemplo.<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                }
+            } catch (err) {
+                agregarResultado(`❌ Error: ${err.message}`, 'error');
+            }
+        };
+
+        window.testAuth = async function() {
+            limpiarResultados();
+            agregarResultado('🔄 Probando autenticación...', 'info');
+            
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    agregarResultado(`❌ Error de autenticación: ${error.message}`, 'error');
+                } else {
+                    if (session) {
+                        agregarResultado(`✅ Sesión activa: ${session.user.email}`, 'success');
+                    } else {
+                        agregarResultado('ℹ️ No hay sesión activa (esto es normal si no has iniciado sesión)', 'info');
+                    }
+                }
+            } catch (err) {
+                agregarResultado(`❌ Error: ${err.message}`, 'error');
+            }
+        };
+
+        window.testTodo = async function() {
+            limpiarResultados();
+            agregarResultado('🔄 Ejecutando todas las pruebas...', 'info');
+            
+            await testConexion();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testMaterias();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testPreguntas();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await testAuth();
+            
+            agregarResultado('✅ Todas las pruebas completadas', 'success');
+        };
+
+        // Cargar información de la base de datos
+        async function cargarInfoDB() {
+            const dbInfoDiv = document.getElementById('dbInfo');
+            
+            try {
+                // Contar materias
+                const { count: countMaterias } = await supabase
+                    .from('materias')
+                    .select('*', { count: 'exact', head: true });
+                
+                // Contar preguntas
+                const { count: countPreguntas } = await supabase
+                    .from('preguntas')
+                    .select('*', { count: 'exact', head: true });
+                
+                // Contar exámenes
+                let countExamenes = 'N/A';
+                try {
+                    const { count } = await supabase
+                        .from('examenes')
+                        .select('*', { count: 'exact', head: true });
+                    countExamenes = count || 0;
+                } catch (e) {
+                    countExamenes = 'Error al acceder';
+                }
+                
+                dbInfoDiv.innerHTML = `
+                    <div class="test-result info">
+                        <strong>Materias:</strong> ${countMaterias || 0}<br>
+                        <strong>Preguntas:</strong> ${countPreguntas || 0}<br>
+                        <strong>Exámenes:</strong> ${countExamenes}
+                    </div>
+                `;
+            } catch (err) {
+                dbInfoDiv.innerHTML = `<div class="test-result error">Error al cargar información: ${err.message}</div>`;
+            }
+        }
+
+        // Inicializar
+        mostrarConfiguracion();
+        cargarInfoDB();
+    </script>
+</body>
+</html>
+

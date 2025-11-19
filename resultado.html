@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Resultados - Plataforma de Apoyo</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="result-card">
+            <div class="result-header">
+                <h1>Resultados del Examen</h1>
+                <button id="backToMateriasBtn" class="btn btn-primary">Volver a Selección de Materias</button>
+            </div>
+            
+            <div class="result-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="score">0</div>
+                    <div class="stat-label">Puntuación</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="correct">0</div>
+                    <div class="stat-label">Correctas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="incorrect">0</div>
+                    <div class="stat-label">Incorrectas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="percentage">0%</div>
+                    <div class="stat-label">Porcentaje</div>
+                </div>
+            </div>
+            
+            <div class="result-details" id="resultDetails">
+                <!-- Los detalles se cargarán dinámicamente -->
+            </div>
+            
+            <div class="result-actions">
+                <button id="newExamBtn" class="btn btn-primary">Volver a Selección de Materias</button>
+                <button id="reviewBtn" class="btn btn-secondary">Revisar Respuestas</button>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/resultado.js"></script>
+</body>
+</html>
+
