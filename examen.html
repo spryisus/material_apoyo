@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Examen - Plataforma de Apoyo</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="exam-wrapper">
+            <div class="exam-header">
+                <h2>Examen de Práctica</h2>
+                <div class="exam-info">
+                    <span>Pregunta <span id="currentQuestion">1</span> de <span id="totalQuestions">30</span></span>
+                    <span class="materias-badge" id="materiasBadge"></span>
+                </div>
+            </div>
+            
+            <div class="exam-card">
+                <div class="question-container">
+                    <div class="question-header">
+                        <span class="question-number" id="questionNumber">1</span>
+                        <div class="question-info">
+                            <span class="question-topic" id="questionTopic"></span>
+                            <h3 id="questionText">Cargando pregunta...</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="options-container" id="optionsContainer">
+                        <!-- Las opciones se cargarán dinámicamente -->
+                    </div>
+                </div>
+                
+                <div class="exam-navigation">
+                    <button id="prevBtn" class="btn btn-secondary" disabled>Anterior</button>
+                    <button id="nextBtn" class="btn btn-primary">Siguiente</button>
+                    <button id="finishBtn" class="btn btn-success" style="display: none;">Finalizar Examen</button>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/examen.js"></script>
+</body>
+</html>
+
