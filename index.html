@@ -30,6 +30,15 @@
                     <input type="text" id="apellido" name="apellido" placeholder="Tu apellido">
                 </div>
                 
+                <div class="form-group" id="rolGroup" style="display: none;">
+                    <label for="rol">Tipo de Usuario *</label>
+                    <select id="rol" name="rol" style="width: 100%; padding: 0.75rem; border: 2px solid var(--border-color); border-radius: 0.5rem; font-size: 1rem; font-family: inherit; background: white;">
+                        <option value="">Selecciona tu tipo de usuario</option>
+                        <option value="alumno">Alumno</option>
+                        <option value="profesor">Maestro</option>
+                    </select>
+                </div>
+                
                 <div class="form-group">
                     <label for="password">Contraseña</label>
                     <input type="password" id="password" name="password" required placeholder="••••••••">

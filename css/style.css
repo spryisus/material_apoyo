@@ -97,7 +97,8 @@ html {
     font-size: 0.9rem;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 0.75rem 1rem;
     border: 2px solid var(--border-color);
@@ -106,9 +107,20 @@ html {
     transition: all 0.3s ease;
     -webkit-appearance: none; /* Elimina estilos nativos de iOS */
     appearance: none;
+    background: white;
 }
 
-.form-group input:focus {
+.form-group select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234f46e5' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 12px;
+    padding-right: 2.5rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
@@ -229,6 +241,22 @@ html {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
+}
+
+/* Temas Grid - usa los mismos estilos que materias-grid */
+.temas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Contenedor del enlace de apoyo */
+.support-link-container {
+    margin-top: 2rem;
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 2px solid var(--border-color);
 }
 
 .materia-card {
@@ -1059,6 +1087,87 @@ html {
     .option-item {
         -webkit-tap-highlight-color: rgba(79, 70, 229, 0.2);
         tap-highlight-color: rgba(79, 70, 229, 0.2);
+    }
+}
+
+/* Estilos para el modal del PDF */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    max-width: 95%;
+    width: 100%;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+#pdfContainer {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+#pdfContainer canvas {
+    max-width: 100%;
+    height: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+/* Responsive para el modal del PDF */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 1rem;
+        max-width: 98%;
+        max-height: 98vh;
+    }
+    
+    #pdfContainer canvas {
+        width: 100%;
     }
 }
 

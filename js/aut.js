@@ -137,6 +137,7 @@ async function login(email, password) {
             email: usuario.email,
             nombre: usuario.nombre || null,
             apellido: usuario.apellido || null,
+            rol: usuario.rol || 'alumno', // 'admin', 'profesor', 'alumno'
             loginTime: new Date().toISOString()
         };
         
@@ -163,7 +164,7 @@ async function login(email, password) {
 }
 
 // Registrar nuevo usuario
-async function register(email, password, nombre = '', apellido = '') {
+async function register(email, password, nombre = '', apellido = '', rol = 'alumno') {
     try {
         // Limpiar email
         const emailLimpio = email.trim().toLowerCase();
@@ -196,6 +197,9 @@ async function register(email, password, nombre = '', apellido = '') {
                 return v.toString(16);
             });
         
+        // Validar rol
+        const rolValido = rol === 'alumno' || rol === 'profesor' ? rol : 'alumno';
+        
         // Insertar usuario en la tabla usuarios
         const { data, error } = await supabase
             .from('usuarios')
@@ -205,6 +209,7 @@ async function register(email, password, nombre = '', apellido = '') {
                 password_hash: passwordHash,
                 nombre: nombre || null,
                 apellido: apellido || null,
+                rol: rolValido,
                 fecha_registro: new Date().toISOString(),
                 fecha_ultimo_acceso: new Date().toISOString()
             })
@@ -262,7 +267,7 @@ async function obtenerUsuario() {
         
         const { data, error } = await supabase
             .from('usuarios')
-            .select('id, email, nombre, apellido, fecha_registro, fecha_ultimo_acceso')
+            .select('id, email, nombre, apellido, rol, fecha_registro, fecha_ultimo_acceso')
             .eq('id', session.userId)
             .single();
         
@@ -375,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Obtener el botón de submit
         const submitButton = loginForm.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
+        let originalButtonText = submitButton.textContent;
         
         // Limpiar y obtener valores
         const email = document.getElementById('email').value.trim().toLowerCase();
@@ -405,21 +410,49 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isRegisterMode) {
                 const nombre = document.getElementById('nombre').value.trim();
                 const apellido = document.getElementById('apellido').value.trim();
+                const rol = document.getElementById('rol').value;
+                
+                // Validar que se seleccionó un rol
+                if (!rol) {
+                    errorMessage.textContent = 'Por favor, selecciona tu tipo de usuario (Alumno o Maestro).';
+                    errorMessage.style.display = 'block';
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
+                    submitButton.style.opacity = '1';
+                    submitButton.style.cursor = 'pointer';
+                    return;
+                }
                 
                 console.log('Iniciando registro...');
-                const result = await register(email, password, nombre, apellido);
+                const result = await register(email, password, nombre, apellido, rol);
                 console.log('Registro completado:', result);
+                
+                // Cambiar a modo login ANTES de mostrar el mensaje
+                isRegisterMode = false;
+                registerLink.textContent = 'Regístrate aquí';
+                
+                // Ocultar campos de registro
+                document.getElementById('nombreGroup').style.display = 'none';
+                document.getElementById('apellidoGroup').style.display = 'none';
+                document.getElementById('rolGroup').style.display = 'none';
+                
+                // Remover required del campo rol cuando está oculto
+                const rolSelect = document.getElementById('rol');
+                rolSelect.required = false;
+                rolSelect.value = ''; // Limpiar valor
+                
+                // Limpiar formulario
+                loginForm.reset();
+                
+                // Actualizar el texto del botón y la variable original
+                submitButton.textContent = 'Iniciar Sesión';
+                originalButtonText = 'Iniciar Sesión'; // Actualizar para que el finally use el texto correcto
                 
                 errorMessage.textContent = '¡Registro exitoso! Por favor inicia sesión.';
                 errorMessage.style.display = 'block';
                 errorMessage.style.color = 'green';
-                isRegisterMode = false;
-                registerLink.textContent = 'Regístrate aquí';
-                submitButton.textContent = 'Iniciar Sesión';
-                document.getElementById('nombreGroup').style.display = 'none';
-                document.getElementById('apellidoGroup').style.display = 'none';
-                // Limpiar formulario
-                loginForm.reset();
+                
+                // El finally restaurará el botón con originalButtonText que ya es 'Iniciar Sesión'
             } else {
                 console.log('Iniciando login...');
                 const loginResult = await login(email, password);
@@ -475,6 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMessage.style.color = 'red';
         } finally {
             // Restaurar el botón
+            // Si fue registro exitoso, originalButtonText ya es 'Iniciar Sesión' y isRegisterMode es false
             submitButton.disabled = false;
             submitButton.textContent = originalButtonText;
             submitButton.style.opacity = '1';
@@ -485,19 +519,50 @@ document.addEventListener('DOMContentLoaded', () => {
     registerLink.addEventListener('click', (e) => {
         e.preventDefault();
         isRegisterMode = !isRegisterMode;
+        const rolSelect = document.getElementById('rol');
+        
         if (isRegisterMode) {
             registerLink.textContent = 'Iniciar sesión';
             loginForm.querySelector('button').textContent = 'Registrarse';
             document.getElementById('nombreGroup').style.display = 'block';
             document.getElementById('apellidoGroup').style.display = 'block';
+            document.getElementById('rolGroup').style.display = 'block';
+            // Agregar required solo cuando está visible
+            rolSelect.required = true;
         } else {
             registerLink.textContent = 'Regístrate aquí';
             loginForm.querySelector('button').textContent = 'Iniciar Sesión';
             document.getElementById('nombreGroup').style.display = 'none';
             document.getElementById('apellidoGroup').style.display = 'none';
+            document.getElementById('rolGroup').style.display = 'none';
+            // Remover required cuando está oculto
+            rolSelect.required = false;
+            rolSelect.value = ''; // Limpiar valor
         }
     });
 });
 
-export { login, logout, checkAuth, checkAuthAndRedirect, register, obtenerUsuario, getCurrentUser, actualizarUsuario, actualizarUltimoAcceso };
+// Verificar si el usuario tiene un rol específico
+function tieneRol(rol) {
+    const user = getCurrentUser();
+    return user && user.rol === rol;
+}
+
+// Verificar si el usuario es administrador
+function esAdmin() {
+    return tieneRol('admin');
+}
+
+// Verificar si el usuario es profesor
+function esProfesor() {
+    return tieneRol('profesor');
+}
+
+// Verificar si el usuario es alumno
+function esAlumno() {
+    const user = getCurrentUser();
+    return !user || !user.rol || user.rol === 'alumno';
+}
+
+export { login, logout, checkAuth, checkAuthAndRedirect, register, obtenerUsuario, getCurrentUser, actualizarUsuario, actualizarUltimoAcceso, tieneRol, esAdmin, esProfesor, esAlumno };
 

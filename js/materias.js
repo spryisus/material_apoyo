@@ -1,7 +1,8 @@
 // js/materias.js
 import { supabase } from './supabase.js';
-import { logout, obtenerUsuario, checkAuth, getCurrentUser } from './aut.js';
+import { logout, obtenerUsuario, checkAuth, getCurrentUser, esAdmin } from './aut.js';
 import { obtenerMaterias } from './database.js';
+import { obtenerIconoMateria } from './materia-icons.js';
 
 // Variable para evitar múltiples verificaciones simultáneas
 let checkingAuth = false;
@@ -106,19 +107,9 @@ async function loadMaterias() {
     try {
         const materias = await obtenerMaterias();
         const materiasGrid = document.getElementById('materiasGrid');
-        const selectedMaterias = new Set();
-        
-        // Actualizar el total de materias dinámicamente
-        const totalMateriasElement = document.getElementById('totalMaterias');
-        if (totalMateriasElement) {
-            totalMateriasElement.textContent = materias.length;
-        }
         
         if (materias.length === 0) {
             materiasGrid.innerHTML = '<p>No hay materias disponibles. Por favor, contacta al administrador.</p>';
-            if (totalMateriasElement) {
-                totalMateriasElement.textContent = '0';
-            }
             return;
         }
         
@@ -127,58 +118,32 @@ async function loadMaterias() {
             materiaCard.className = 'materia-card';
             materiaCard.dataset.materiaId = materia.id;
             
+            // Obtener icono específico para la materia
+            const icono = obtenerIconoMateria(materia.nombre);
+            
             materiaCard.innerHTML = `
-                <input type="checkbox" id="materia-${materia.id}" class="materia-checkbox">
-                <label for="materia-${materia.id}" class="materia-label">
-                    <div class="materia-icon">📚</div>
+                <div class="materia-label" style="cursor: pointer;">
+                    <div class="materia-icon">${icono}</div>
                     <div class="materia-name">${materia.nombre}</div>
-                </label>
+                </div>
             `;
             
-            const checkbox = materiaCard.querySelector('.materia-checkbox');
-            checkbox.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    selectedMaterias.add(materia.id);
-                    materiaCard.classList.add('selected');
-                } else {
-                    selectedMaterias.delete(materia.id);
-                    materiaCard.classList.remove('selected');
-                }
-                
-                updateSelectionInfo(selectedMaterias.size);
+            // Al hacer clic en la tarjeta, redirigir a la página de temas
+            materiaCard.addEventListener('click', () => {
+                // Guardar el ID de la materia seleccionada en sessionStorage
+                sessionStorage.setItem('materiaSeleccionada', JSON.stringify({
+                    id: materia.id,
+                    nombre: materia.nombre
+                }));
+                window.location.href = 'temas.html';
             });
             
             materiasGrid.appendChild(materiaCard);
-        });
-        
-        // Botón para iniciar examen
-        document.getElementById('startExamBtn').addEventListener('click', () => {
-            if (selectedMaterias.size > 0) {
-                // Guardar IDs de materias seleccionadas en sessionStorage
-                sessionStorage.setItem('materiasSeleccionadas', JSON.stringify(Array.from(selectedMaterias)));
-                window.location.href = 'examen.html';
-            }
         });
     } catch (error) {
         console.error('Error al cargar materias:', error);
         document.getElementById('materiasGrid').innerHTML = 
             '<p class="error-message">Error al cargar las materias. Por favor, recarga la página.</p>';
-        
-        // Si hay error, mostrar 0 en el total
-        const totalMateriasElement = document.getElementById('totalMaterias');
-        if (totalMateriasElement) {
-            totalMateriasElement.textContent = '0';
-        }
-    }
-}
-
-function updateSelectionInfo(count) {
-    document.getElementById('selectedCount').textContent = count;
-    const startBtn = document.getElementById('startExamBtn');
-    if (count > 0) {
-        startBtn.disabled = false;
-    } else {
-        startBtn.disabled = true;
     }
 }
 
@@ -199,6 +164,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await loadUserInfo();
         loadMaterias();
+        
+        // Botón de administración (solo para admins)
+        const adminBtn = document.getElementById('adminBtn');
+        if (adminBtn) {
+            if (esAdmin()) {
+                adminBtn.style.display = 'inline-block';
+                adminBtn.addEventListener('click', () => {
+                    window.location.href = 'admin.html';
+                });
+            } else {
+                adminBtn.style.display = 'none';
+            }
+        }
         
         // Botón de cerrar sesión
         const logoutBtn = document.getElementById('logoutBtn');

@@ -11,19 +11,21 @@
         <div class="welcome-card">
             <div class="welcome-header">
                 <h1>¡Bienvenido<span id="userName"></span>! 👋</h1>
-                <p>Selecciona las materias que deseas estudiar</p>
-                <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+                <p>Selecciona la materia que deseas estudiar</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+                    <button id="adminBtn" class="btn btn-primary" style="display: none;">⚙️ Administración</button>
+                    <button id="logoutBtn" class="btn btn-secondary">Cerrar Sesión</button>
+                </div>
             </div>
             
             <div class="materias-grid" id="materiasGrid">
                 <!-- Las materias se cargarán dinámicamente -->
             </div>
             
-            <div class="selection-info">
-                <p>Materias seleccionadas: <span id="selectedCount">0</span> de <span id="totalMaterias">-</span></p>
-                <button id="startExamBtn" class="btn btn-primary" disabled>
-                    Iniciar Examen
-                </button>
+            <div class="support-link-container" style="margin-top: 2rem; text-align: center;">
+                <a href="https://quierosertelefonista.wordpress.com/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="text-decoration: none; display: inline-block;">
+                    Link de apoyo
+                </a>
             </div>
         </div>
     </div>

@@ -276,3 +276,310 @@ export async function obtenerHistorialExamenes(usuarioId) {
     }
 }
 
+// Obtener temas únicos de una materia desde las preguntas
+export async function obtenerTemasPorMateria(materiaId) {
+    try {
+        // Importar funciones de configuración de PDF
+        const { obtenerNombreTema, pdfConfig } = await import('./pdf-config.js');
+        
+        // Si hay configuración de temas en pdfConfig, usar esos temas
+        if (pdfConfig[materiaId]) {
+            const temasConfigurados = Object.keys(pdfConfig[materiaId])
+                .map(num => parseInt(num))
+                .sort((a, b) => a - b)
+                .map(numero => {
+                    const nombrePersonalizado = obtenerNombreTema(materiaId, numero);
+                    return {
+                        id: numero,
+                        nombre: nombrePersonalizado || `Tema ${numero}`,
+                        numero: numero
+                    };
+                });
+            
+            if (temasConfigurados.length > 0) {
+                return temasConfigurados;
+            }
+        }
+        
+        // Si no hay configuración en BD, retornar array vacío
+        // (Los temas deben configurarse desde el panel de administración)
+        return [];
+    } catch (error) {
+        console.error('Error al obtener temas por materia:', error);
+        throw error;
+    }
+}
+
+// ========== FUNCIONES DE ADMINISTRACIÓN ==========
+
+// Crear nueva materia
+export async function crearMateria(nombre, descripcion = '') {
+    try {
+        const { data, error } = await supabase
+            .from('materias')
+            .insert({ nombre, descripcion })
+            .select()
+            .single();
+        
+        if (error) {
+            console.error('Error al crear materia:', error);
+            throw error;
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error completo en crearMateria:', error);
+        throw error;
+    }
+}
+
+// Actualizar materia
+export async function actualizarMateria(materiaId, datos) {
+    try {
+        const { data, error } = await supabase
+            .from('materias')
+            .update(datos)
+            .eq('id', materiaId)
+            .select()
+            .single();
+        
+        if (error) {
+            console.error('Error al actualizar materia:', error);
+            throw error;
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error completo en actualizarMateria:', error);
+        throw error;
+    }
+}
+
+// Eliminar materia
+export async function eliminarMateria(materiaId) {
+    try {
+        const { error } = await supabase
+            .from('materias')
+            .delete()
+            .eq('id', materiaId);
+        
+        if (error) {
+            console.error('Error al eliminar materia:', error);
+            throw error;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error completo en eliminarMateria:', error);
+        throw error;
+    }
+}
+
+// Guardar configuración de PDF para una materia
+export async function guardarConfiguracionPDF(materiaId, pdfPath, temas) {
+    // temas es un array: [{ numero: 1, nombre: "Tema 1", paginas: [1, 5] }, ...]
+    try {
+        // Verificar que el usuario sea admin (verificación en código)
+        const { esAdmin } = await import('./aut.js');
+        if (!esAdmin()) {
+            throw new Error('Solo los administradores pueden guardar configuración de PDFs');
+        }
+        
+        // Primero, eliminar configuración anterior si existe
+        const { error: deleteError } = await supabase
+            .from('materia_pdf_config')
+            .delete()
+            .eq('materia_id', materiaId);
+        
+        if (deleteError) {
+            console.warn('Error al eliminar configuración anterior (puede que no exista):', deleteError);
+        }
+        
+        // Insertar nueva configuración
+        const configData = temas.map(tema => ({
+            materia_id: materiaId,
+            tema_numero: tema.numero,
+            tema_nombre: tema.nombre,
+            pagina_inicio: tema.paginas[0],
+            pagina_fin: tema.paginas[1] || tema.paginas[0],
+            pdf_path: pdfPath,
+            video_url: tema.video_url || null
+        }));
+        
+        const { data, error } = await supabase
+            .from('materia_pdf_config')
+            .insert(configData)
+            .select();
+        
+        if (error) {
+            console.error('Error al guardar configuración PDF:', error);
+            throw error;
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error completo en guardarConfiguracionPDF:', error);
+        throw error;
+    }
+}
+
+// Obtener configuración de PDF de una materia
+export async function obtenerConfiguracionPDF(materiaId) {
+    try {
+        // Convertir materiaId a número si es string
+        const id = typeof materiaId === 'string' ? parseInt(materiaId) : materiaId;
+        console.log('obtenerConfiguracionPDF: Buscando para materia_id =', id);
+        
+        const { data, error } = await supabase
+            .from('materia_pdf_config')
+            .select('*')
+            .eq('materia_id', id)
+            .order('tema_numero');
+        
+        if (error) {
+            console.error('Error al obtener configuración PDF:', error);
+            console.error('Código de error:', error.code);
+            console.error('Mensaje:', error.message);
+            throw error;
+        }
+        
+        console.log('obtenerConfiguracionPDF: Resultados encontrados:', data ? data.length : 0);
+        if (data && data.length > 0) {
+            console.log('Primer tema encontrado:', data[0]);
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('Error completo en obtenerConfiguracionPDF:', error);
+        throw error;
+    }
+}
+
+// Subir PDF a Supabase Storage (organizado por materias)
+export async function subirPDF(materiaId, archivo) {
+    try {
+        const fileExt = archivo.name.split('.').pop();
+        const fileName = `material.${fileExt}`;
+        // Organizar por materias: materias/{materiaId}/material.pdf
+        const filePath = `materias/${materiaId}/${fileName}`;
+        
+        // Si ya existe un PDF para esta materia, eliminarlo primero
+        try {
+            const { data: existingFiles } = await supabase.storage
+                .from('material-apoyo')
+                .list(`materias/${materiaId}/`);
+            
+            if (existingFiles && existingFiles.length > 0) {
+                const filesToDelete = existingFiles.map(f => `materias/${materiaId}/${f.name}`);
+                await supabase.storage
+                    .from('material-apoyo')
+                    .remove(filesToDelete);
+            }
+        } catch (deleteError) {
+            // Si no existe, no hay problema
+            console.log('No hay PDF anterior para eliminar o error al eliminar:', deleteError);
+        }
+        
+        const { data, error } = await supabase.storage
+            .from('material-apoyo')
+            .upload(filePath, archivo, {
+                cacheControl: '3600',
+                upsert: true // Permitir sobrescribir si existe
+            });
+        
+        if (error) {
+            console.error('Error al subir PDF:', error);
+            throw error;
+        }
+        
+        // Obtener URL pública
+        const { data: urlData } = supabase.storage
+            .from('material-apoyo')
+            .getPublicUrl(filePath);
+        
+        return {
+            path: filePath,
+            url: urlData.publicUrl,
+            fileName: fileName
+        };
+    } catch (error) {
+        console.error('Error completo en subirPDF:', error);
+        throw error;
+    }
+}
+
+// Obtener URL del PDF de una materia
+export async function obtenerPDFMateria(materiaId) {
+    try {
+        const config = await obtenerConfiguracionPDF(materiaId);
+        if (!config || config.length === 0) {
+            return null;
+        }
+        
+        // Todos los temas de una materia usan el mismo PDF
+        const pdfPath = config[0].pdf_path;
+        
+        // Obtener URL pública
+        const { data: urlData } = supabase.storage
+            .from('material-apoyo')
+            .getPublicUrl(pdfPath);
+        
+        return {
+            path: pdfPath,
+            url: urlData.publicUrl
+        };
+    } catch (error) {
+        console.error('Error al obtener PDF de materia:', error);
+        return null;
+    }
+}
+
+// Migrar PDF antiguo a estructura por materias
+export async function migrarPDFAntiguo(materiaId, pdfPathAntiguo) {
+    try {
+        // Leer el archivo antiguo
+        const { data: fileData, error: downloadError } = await supabase.storage
+            .from('material-apoyo')
+            .download(pdfPathAntiguo);
+        
+        if (downloadError) {
+            throw new Error(`No se pudo leer el archivo antiguo: ${downloadError.message}`);
+        }
+        
+        // Determinar extensión del archivo
+        const fileExt = pdfPathAntiguo.split('.').pop() || 'pdf';
+        const newFileName = `material.${fileExt}`;
+        const newPath = `materias/${materiaId}/${newFileName}`;
+        
+        // Subir a la nueva ubicación
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('material-apoyo')
+            .upload(newPath, fileData, {
+                cacheControl: '3600',
+                upsert: true
+            });
+        
+        if (uploadError) {
+            throw new Error(`No se pudo subir el archivo: ${uploadError.message}`);
+        }
+        
+        // Actualizar todas las configuraciones de PDF de esta materia
+        const { error: updateError } = await supabase
+            .from('materia_pdf_config')
+            .update({ pdf_path: newPath })
+            .eq('materia_id', materiaId);
+        
+        if (updateError) {
+            console.warn('Error al actualizar configuración, pero el archivo se migró:', updateError);
+        }
+        
+        return {
+            path: newPath,
+            success: true
+        };
+    } catch (error) {
+        console.error('Error al migrar PDF:', error);
+        throw error;
+    }
+}
+
