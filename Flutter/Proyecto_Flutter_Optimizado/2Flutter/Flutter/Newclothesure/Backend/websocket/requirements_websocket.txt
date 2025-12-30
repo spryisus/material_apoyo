@@ -1,0 +1,3 @@
+# Dependencias para el servidor WebSocket
+python-socketio==5.11.2
+aiohttp==3.9.5
